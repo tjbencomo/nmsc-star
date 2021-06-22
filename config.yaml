@@ -1,0 +1,6 @@
+samples: samples.csv
+
+star_index: /home/groups/carilee/refs/rnaseq-refs/hg38/star_index
+star_cores: 4
+star_container: /home/groups/carilee/software/containers/star_v2.7.9
+

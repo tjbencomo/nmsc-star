@@ -33,13 +33,23 @@ def isPE(wildcards):
     else:
         return True
 
-def isZipped(fq):
+def isGzZipped(fq):
     return fq.endswith('.gz')
+
+def getRSEMStranding(wildcards):
+    strandedness = samples.loc[(wildcards.sample_id), 'strandedness']
+    if strandedness == 'reverse':
+        return '--forward-prob 0'
+    elif strandedness == 'forward':
+        return '--forward-prob 1'
+    elif strandedness == 'none':
+        return '--forward-prob .5'
+    else:
+        raise ValueError(f"strandedness value {strandedness} not recognized")
 
 rule targets:
     input:
         expand("rsem/{sample_id}", sample_id = samples['id'])
-        #expand("star/{sample_id}", sample_id=samples['id'])
 
 rule star:
     input:
@@ -51,7 +61,7 @@ rule star:
     threads: star_threads
     singularity: star_container
     params: 
-        readcmd = lambda wildcards, input: '--readFilesCommand zcat' if isZipped(input.fq1) else '',
+        readcmd = lambda wildcards, input: '--readFilesCommand zcat' if isGzZipped(input.fq1) else '',
         outdir = "star/{sample_id}/"
     shell:
         """
@@ -73,11 +83,12 @@ rule rsem:
     singularity: rsem_container
     params: 
         ref=rsem_ref,
-        outdir="rsem/{sample_id}/"
+        outdir="rsem/{sample_id}/",
+        strand=lambda wildcards: getRSEMStranding(wildcards)
     shell:
         """
         mkdir {params.outdir}
         rsem-calculate-expression --paired-end -p {threads} \
-            --alignments {input} {params.ref} {params.outdir}
+            --alignments {params.strand} {input} {params.ref} {params.outdir}
         """
      

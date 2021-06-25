@@ -47,3 +47,8 @@ sbatch run_pipeline.sh $(pwd)
 Two directories will be created
 * `star/` - contains the output of each STAR run
 * `rsem/` - contains the output of each RSEM run
+
+## Troubleshooting
+Common issues:
+1. STAR needs a lot of RAM, especially for the human genome. Specify the resources in `cluster.json` accordingly
+2. Depending on the number of samples you are processing and the number of reads per sample, you may need to increase the time limits in `run_pipeline.sh` and `cluster.json`

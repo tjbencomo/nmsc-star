@@ -1,10 +1,15 @@
+# CSV file with sample metadata
 samples: samples.csv
 
+# Path to the STAR index
 star_index: /home/groups/carilee/refs/rnaseq-refs/hg38/star_index
 star_threads: 4
+# Path or URL to the STAR singularity container. This pulls from Bioconda's singularity depo
 star_container: https://depot.galaxyproject.org/singularity/star%3A2.7.9a--h9ee0642_0
 
+# Path to the RSEM index
 rsem_ref: /home/groups/carilee/refs/rnaseq-refs/hg38/rsem_ref
 rsem_threads: 4
+# Path or URL to the RSEM singularity container
 rsem_container: https://depot.galaxyproject.org/singularity/rsem%3A1.3.3--pl5262h3198e80_2
 

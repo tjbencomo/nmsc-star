@@ -1,0 +1,23 @@
+{
+    "__default__" :
+    {
+        "account" : "tbencomo",
+        "time" : "01:00:00",
+        "ncpus" : 1,
+        "mem" : "8G",
+        "partition" : "normal",
+        "out" : "/scratch/users/tbencomo/logs/star-rsem/slurm-{jobid}.out"
+    },
+    "star" :
+    {
+        "time" : "6:00:00",
+        "ncpus" : 4,
+        "mem" : "32G"
+    },
+    "rsem" :
+    {
+        "time" : "4:00:00",
+        "ncpus" : 2,
+        "mem" : "16G"
+    }
+} 

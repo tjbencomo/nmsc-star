@@ -1,2 +1,2 @@
 patient,condition,fq1,fq2
-P100,SCC,/scratch/groups/carilee/lab-datasets/scc-rnaseq/scc_100_1.fq.gz,/scratch/groups/carilee/lab-datasets/scc-rnaseq/scc_100_2.fq.gz
+P100,SCC,data/test_1.fq,data/test_2.fq

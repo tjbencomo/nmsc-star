@@ -20,7 +20,8 @@ conda install -c biocoonda snakemake
 * `fq2` - right FASTQ
 * `strandedness` - [`forward|reverse|none`]
 
-See [this tutorial](https://littlebitofdata.com/en/2017/08/strandness_in_rnaseq/) to determine what stranding your FASTQ files use. `forward` matches case A in the tutorial. `reverse` is case B, and `none` is case C. You can also use [`check-strand`](https://github.com/tjbencomo/check-strand) to quickly infer the strand type using Kallisto.
+See [this tutorial](https://littlebitofdata.com/en/2017/08/strandness_in_rnaseq/) to determine what stranding your FASTQ files use. `forward` matches case A in the tutorial. `reverse` is case B, and `none` is case C. You can also use [RSeQC](https://github.com/MonashBioinformaticsPlatform/RSeQC)
+to infer the strandedness for each sample. I have also developed my [own tool](https://github.com/tjbencomo/check-strand) for this using kallisto. 
 
 ## Running the pipeline
 To run `star-rsem` without Singularity:

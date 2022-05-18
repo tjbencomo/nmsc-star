@@ -6,18 +6,27 @@
         "ncpus" : 1,
         "mem" : "8G",
         "partition" : "normal",
-        "out" : ""
+        "out" : "{logpath}/{rule}-{jobid}.out"
     },
     "star" :
     {
         "time" : "6:00:00",
-        "ncpus" : 4,
-        "mem" : "32G"
+        "ncpus" : "{star_threads}",
+        "mem" : "42G",
+        "out" : "{logpath}/{rule}-{wildcards.sample_id}.out"
     },
     "rsem" :
     {
         "time" : "4:00:00",
-        "ncpus" : 2,
-        "mem" : "16G"
+        "ncpus" : "{rsem_threads}",
+        "mem" : "16G",
+        "out" : "{logpath}/{rule}-{wildcards.sample_id}.out"
+    },
+    "validateFastq" :
+    {
+        "time" : "1:30:00",
+        "ncpus" : 1,
+        "mem" : "4G",
+        "out" : "{logpath}/{rule}-{wildcards.sample_id}.out"
     }
 } 

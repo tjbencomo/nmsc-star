@@ -1,20 +1,31 @@
 import pandas as pd
+from pathlib import Path
 
 configfile: "config.yaml"
 samples_fp = config['samples']
 samples = pd.read_csv(samples_fp, dtype=str)
 
+# Logs
+slurm_logdir = config['slurm_log_dir']
+logpath = Path(slurm_logdir)
+logpath.mkdir(parents=True, exist_ok=True) 
+
+# STAR
 star_index = config['star_index']
 star_threads = config['star_threads']
 star_container = config['star_container']
 
+# RSEM
 rsem_ref = config['rsem_ref']
 rsem_threads = config['rsem_threads']
 rsem_container = config['rsem_container']
 
+# Set sample indices
 samples['id'] = samples['patient'] + '-' + samples['condition']
 samples = samples.set_index(["id"], drop=False)
 samples = samples.sort_index()
+
+validateFastq_container = config['validateFastq_container']
 
 star_index = config['star_index']
 
@@ -49,7 +60,8 @@ def getRSEMStranding(wildcards):
 
 rule targets:
     input:
-        expand("rsem/{sample_id}", sample_id = samples['id'])
+        expand("rsem/{sample_id}", sample_id = samples['id']),
+        "qc/validateFastq_summary.csv"
 
 rule star:
     input:
@@ -71,6 +83,7 @@ rule star:
             --outFileNamePrefix {params.outdir} \
             --quantMode TranscriptomeSAM \
             --outSAMtype BAM SortedByCoordinate \
+            --twopassMode Basic \
             {params.readcmd}
         """
 
@@ -91,4 +104,24 @@ rule rsem:
         rsem-calculate-expression --paired-end -p {threads} \
             --alignments {params.strand} {input} {params.ref} {params.outdir}
         """
-     
+
+rule validateFastq:
+    input:
+        unpack(get_fqs)
+    output:
+        "qc/validateFastq/{sample_id}.txt"
+    params:
+        fqs = lambda wildcards, input: f"-i {input.fq}" if not isPE(wildcards) else f"-i {input.fq1} -j {input.fq2}"
+    singularity: validateFastq_container
+    shell:
+        """
+        biopet-validatefastq {params} 2>&1 | tee {output}
+        """
+
+rule checkFastqValidation:
+    input:
+        expand("qc/validateFastq/{sample_id}.txt", sample_id = samples['id'])
+    output:
+        "qc/validateFastq_summary.csv"
+    script:
+        "scripts/summarize_fastqValidation.py"

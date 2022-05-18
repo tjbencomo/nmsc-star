@@ -1,6 +1,12 @@
 # CSV file with sample metadata
 samples: samples.csv
 
+# SLURM Log File
+# Set directory to save slurm log files (if using cluster execution)
+# This can be an absolute or relative path
+# If the directory doesn't exist the pipeline will create it
+slurm_log_dir: slurm-logs
+
 # Path to the STAR index
 star_index: /home/groups/carilee/refs/rnaseq-refs/hg38/star_index
 star_threads: 4
@@ -13,3 +19,5 @@ rsem_threads: 4
 # Path or URL to the RSEM singularity container
 rsem_container: https://depot.galaxyproject.org/singularity/rsem%3A1.3.3--pl5262h3198e80_2
 
+# validateFastq
+validateFastq_container: https://depot.galaxyproject.org/singularity/biopet-validatefastq:0.1.1--hdfd78af_3

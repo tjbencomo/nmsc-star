@@ -1,3 +1,3 @@
 patient,condition,fq1,fq2,strandedness
-H1,NormalSkin,data/SRR10357028_1.fastq,data/SRR10357028_2.fastq,reverse
-cSCC1,cSCC,data/SRR10357035_1.fastq,data/SRR10357035_1.fastq,reverse
+P1-NormalSkin,NS,data/ctrl_100_1_short.fq.gz,data/ctrl_100_2_short.fq.gz,none
+P1-SCC,SCC,data/scc_100_1_short.fq.gz,data/scc_100_2_short.fq.gz,none

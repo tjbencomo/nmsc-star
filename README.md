@@ -47,6 +47,7 @@ sbatch run_pipeline.sh $(pwd)
 Two directories will be created
 * `star/` - contains the output of each STAR run
 * `rsem/` - contains the output of each RSEM run
+* `qc/` - contains FASTQ quality control checks via `validateFastq`. These are summarized in `validateFastq_summary.csv`
 
 ## Troubleshooting
 Common issues:

@@ -1,5 +1,6 @@
 # star-rsem
-Simple Snakemake pipeline to align RNA-Seq reads and quantify counts using STAR and RSEM. 
+STAR-RSEM Snakemake pipeline for cSCC meta-analysis project. Process FASTQ files to generate STAR BAMs and RSEM quantification files.
+Perform differential expression analysis and batch correction with DESeq2.
 
 ## Installation
 1. Install Snakemake

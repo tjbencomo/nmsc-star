@@ -1,0 +1,2 @@
+study_accession,patient,condition,run,fq1,fq2,salmon_strandedness,strandedness
+GSE125285,GSM3567700,NS,SRR8452516,/scratch/users/tbencomo/nmsc-data/SRR8452516_1.fastq,/scratch/users/tbencomo/nmsc-data/SRR8452516_2.fastq,ISR,reverse

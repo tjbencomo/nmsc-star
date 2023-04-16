@@ -1,5 +1,6 @@
 # CSV file with sample metadata
 samples: samples.csv
+# samples: test.csv
 
 # SLURM Log File
 # Set directory to save slurm log files (if using cluster execution)
@@ -9,7 +10,7 @@ slurm_log_dir: slurm-logs
 
 # Path to the STAR index
 star_index: /home/groups/carilee/refs/rnaseq-refs/hg38/star_index
-star_threads: 4
+star_threads: 6
 # Path or URL to the STAR singularity container. This pulls from Bioconda's singularity depo
 star_container: https://depot.galaxyproject.org/singularity/star%3A2.7.9a--h9ee0642_0
 
@@ -21,3 +22,12 @@ rsem_container: https://depot.galaxyproject.org/singularity/rsem%3A1.3.3--pl5262
 
 # validateFastq
 validateFastq_container: https://depot.galaxyproject.org/singularity/biopet-validatefastq:0.1.1--hdfd78af_3
+
+# qualimap
+gtf: /home/groups/carilee/refs/rnaseq-refs/hg38/gencode.v38.annotation.gtf
+memory_size: 16G
+qualimap_container: /home/groups/carilee/software/containers/qualimap_v2.2.2
+# qualimap_container: https://depot.galaxyproject.org/singularity/qualimap:2.2.2d--hdfd78af_2
+#
+# MultiQC
+multiqc_container: /home/groups/carilee/software/containers/multiqc_v1.12

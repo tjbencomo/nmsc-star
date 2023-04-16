@@ -20,6 +20,14 @@ rsem_ref = config['rsem_ref']
 rsem_threads = config['rsem_threads']
 rsem_container = config['rsem_container']
 
+# Qualimap
+annot_gtf = config['gtf']
+qualimap_container = config['qualimap_container']
+qualimap_mem = config['memory_size']
+
+# MultiQC
+multiqc_container = config['multiqc_container']
+
 # Set sample indices
 samples['id'] = samples['patient'] + '-' + samples['condition']
 samples = samples.set_index(["id"], drop=False)
@@ -47,6 +55,15 @@ def isPE(wildcards):
 def isGzZipped(fq):
     return fq.endswith('.gz')
 
+def getQualimapProtocol(wildcards):
+    strandinfo = samples.loc[(wildcards.sample_id), 'strandedness']
+    if strandinfo == 'reverse':
+        return 'strand-specific-reverse'
+    elif strandinfo == 'forward':
+        return 'strand-specific-forward'
+    else:
+        return 'non-strand-specific'
+
 def getRSEMStranding(wildcards):
     strandedness = samples.loc[(wildcards.sample_id), 'strandedness']
     if strandedness == 'reverse':
@@ -60,7 +77,9 @@ def getRSEMStranding(wildcards):
 
 rule targets:
     input:
-        expand("rsem/{sample_id}", sample_id = samples['id']),
+        expand("rsem/{sample_id}.genes.results", sample_id = samples['id']),
+        expand("qc/qualimap/{sample_id}", sample_id = samples['id']),
+        "qc/multiqc_report.html",
         "qc/validateFastq_summary.csv"
 
 rule star:
@@ -69,6 +88,7 @@ rule star:
         genomedir=star_index
     output:
         outdir=directory("star/{sample_id}/"),
+        outgenbam="star/{sample_id}/Aligned.sortedByCoord.out.bam",
         outbam="star/{sample_id}/Aligned.toTranscriptome.out.bam"
     threads: star_threads
     singularity: star_container
@@ -91,18 +111,19 @@ rule rsem:
     input:
         "star/{sample_id}/Aligned.toTranscriptome.out.bam"
     output:
-        directory("rsem/{sample_id}/")
+        "rsem/{sample_id}.genes.results",
+        "rsem/{sample_id}.isoforms.results",
+        "rsem/{sample_id}.transcript.bam"
     threads: rsem_threads
     singularity: rsem_container
     params: 
         ref=rsem_ref,
-        outdir="rsem/{sample_id}/",
+        outprefix="rsem/{sample_id}",
         strand=lambda wildcards: getRSEMStranding(wildcards)
     shell:
         """
-        mkdir {params.outdir}
         rsem-calculate-expression --paired-end -p {threads} \
-            --alignments {params.strand} {input} {params.ref} {params.outdir}
+            --alignments {params.strand} {input} {params.ref} {params.outprefix}
         """
 
 rule validateFastq:
@@ -115,7 +136,7 @@ rule validateFastq:
     singularity: validateFastq_container
     shell:
         """
-        biopet-validatefastq {params} 2>&1 | tee {output}
+        biopet-validatefastq {params} | tee {output}
         """
 
 rule checkFastqValidation:
@@ -125,3 +146,37 @@ rule checkFastqValidation:
         "qc/validateFastq_summary.csv"
     script:
         "scripts/summarize_fastqValidation.py"
+
+rule qualimap:
+    input:
+        bam="star/{sample_id}/Aligned.sortedByCoord.out.bam",
+        gtf=annot_gtf
+    output:
+        directory("qc/qualimap/{sample_id}")
+    params:
+        mem=qualimap_mem,
+        paired=lambda wildcards, input: f"-pe" if isPE(wildcards) else "",
+        protocol=lambda wildcards: getQualimapProtocol(wildcards)
+    singularity: qualimap_container
+    shell:
+        """
+        qualimap rnaseq -bam {input.bam} -gtf {input.gtf} \
+            -outdir {output} --java-mem-size={params.mem} \
+            -s {params.paired} -p {params.protocol}
+        """
+
+rule multiqc:
+    input:
+        star="star",
+        rsem="rsem",
+        qc="qc/qualimap"
+    output:
+        "qc/multiqc_report.html",
+        directory("qc/multiqc_data")
+    params:
+        outdir = "qc/"
+    singularity: multiqc_container
+    shell:
+        """
+        multiqc {input} -o {params.outdir}
+        """

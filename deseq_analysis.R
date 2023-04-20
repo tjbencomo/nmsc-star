@@ -56,6 +56,7 @@ stopifnot(all(rownames(dds) == genedf$gene_id))
 rowData(dds)$ensgene <- genedf$ensgene
 rowData(dds)$symbol <- genedf$gene_symbol
 
+# Compute DEGs
 print("Computing contrasts")
 resSCC_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "NS"), parallel = T) %>%
     data.frame() %>%
@@ -98,8 +99,18 @@ resIEC_Mixed <- results(dds, filterFun = ihw, alpha = .01, contrast = c("conditi
     inner_join(genedf) %>%
     mutate(up_in_iec = log2FoldChange > 0)
 
+
+# VST normalization
+vsd <- vst(dds, blind = F)
+vsdBlind = vst(dds, blind = T)
+
+# Batch correction
+
+# Save results
 print("Saving results")
 saveRDS(dds, file.path(deseqDir, "deseq_obj.rds"))
+saveRDS(vsd, file.path(deseqDir, "vst_normalized_counts.rds"))
+saveRDS(vsdBlind, file.path(deseqDir, "vst_normalized_counts_blind.rds"))
 write_csv(resSCC_NS, file.path(deseqDir, "SCC_vs_NS.csv"))
 write_csv(resSCC_AK, file.path(deseqDir, "SCC_vs_AK.csv"))
 write_csv(resAK_NS, file.path(deseqDir, "AK_vs_NS.csv"))

@@ -13,7 +13,7 @@ register(MulticoreParam(4))
 rsemDir <- "rsem"
 dataDir <- file.path("~", "nmsc-rna-seq", "data")
 metadataFp <- file.path(dataDir, "Final_Cohort.csv")
-tx2gFp <- file.path(dataDir, "gencode.v38.tx2gene.tsv.gz")
+tx2gFp <- file.path(dataDir, "gencode.v38.tx2gene.csv.gz")
 deseqDir <- "deseq"
 if (!dir.exists(deseqDir)) {
     dir.create(deseqDir)
@@ -22,7 +22,7 @@ if (!dir.exists(deseqDir)) {
 # Load metadata
 print("Loading metadata")
 metadata <- read_csv(metadataFp)
-tx2g <- read_tsv(tx2gFp) %>% select(-hgnc_symbol)
+tx2g <- read_csv(tx2gFp)
 metadata <- metadata %>%
     filter(condition != "BCC") %>%
     mutate(condition = factor(condition, levels = c('NS', 'IEC', 'Mixed', 'BCC', 'AK', 'SCC'))) %>%
@@ -33,7 +33,7 @@ metadata <- metadata %>%
 print("Loading RSEM files")
 files <- file.path(rsemDir, paste0(metadata$Sample, ".isoforms.results"))
 names(files) <- metadata$Sample
-txi.rsem <- tximport(files, type = "rsem", txIn = TRUE, txOut = FALSE, tx2gene = tx2g)
+txi.rsem <- tximport(files, type = "rsem", txIn = TRUE, txOut = FALSE, tx2gene = tx2g %>% select(-gene_symbol))
 
 
 # Check that samples are properly matched with read data
@@ -46,29 +46,67 @@ print("Running DESeq2")
 dds <- DESeq(dds, parallel = T)
 
 print(dds)
+# saveRDS(dds, "deseq/tmp.deseq.rds")
+
+# Add gene symbol info to dds object
+genedf <- tx2g %>% select(-transcript_id) %>% distinct(gene_id, .keep_all = T)
+genedf <- genedf[match(rownames(dds), genedf$gene_id), ]
+genedf$ensgene <- str_split(genedf$gene_id, "\\.", simplify = T)[, 1]
+stopifnot(all(rownames(dds) == genedf$gene_id))
+rowData(dds)$ensgene <- genedf$ensgene
+rowData(dds)$symbol <- genedf$gene_symbol
 
 print("Computing contrasts")
-resSCC_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "NS"), parallel = T)
-resSCC_AK <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "AK"), parallel = T)
-resAK_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "AK", "NS"), parallel = T)
-resIEC_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "IEC", "NS"), parallel = T)
-resMixed_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "Mixed", "NS"), parallel = T)
-resSCC_IEC <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "IEC"), parallel = T)
+resSCC_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "NS"), parallel = T) %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_scc = log2FoldChange > 0)
+resSCC_AK <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "AK"), parallel = T) %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_scc = log2FoldChange > 0)
+resAK_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "AK", "NS"), parallel = T) %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_ak = log2FoldChange > 0)
+resIEC_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "IEC", "NS"), parallel = T) %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_iec = log2FoldChange > 0)
+resMixed_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "Mixed", "NS"), parallel = T) %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_mixed = log2FoldChange > 0)
+resSCC_IEC <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "IEC"), parallel = T) %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_scc = log2FoldChange > 0)
+resSCC_Mixed <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "Mixed"), parallel = T) %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_scc = log2FoldChange > 0)
+resIEC_Mixed <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "IEC", "Mixed"), parallel = T) %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_iec = log2FoldChange > 0)
 
 print("Saving results")
 saveRDS(dds, file.path(deseqDir, "deseq_obj.rds"))
-write_csv(data.frame(resSCC_NS), file.path(deseqDir, "SCC_vs_NS.csv"))
-write_csv(data.frame(resSCC_AK), file.path(deseqDir, "SCC_vs_AK.csv"))
-write_csv(data.frame(resAK_NS), file.path(deseqDir, "AK_vs_NS.csv"))
-write_csv(data.frame(resIEC_NS), file.path(deseqDir, "IEC_vs_NS.csv"))
-write_csv(data.frame(resMixed_NS), file.path(deseqDir, "Mixed_vs_NS.csv"))
-write_csv(data.frame(resSCC_IEC), file.path(deseqDir, "SCC_vs_IEC.csv"))
-
-# saveRDS(resSCC_NS, file.path(deseqDir, "SCC_vs_NS.rds"))
-# saveRDS(resSCC_AK, file.path(deseqDir, "SCC_vs_AK.rds"))
-# saveRDS(resAK_NS, file.path(deseqDir, "AK_vs_NS.rds"))
-# saveRDS(resIEC_NS, file.path(deseqDir, "IEC_vs_NS.rds"))
-# saveRDS(resMixed_NS, file.path(deseqDir, "Mixed_vs_NS.rds"))
-# saveRDS(resSCC_IEC, file.path(deseqDir, "SCC_vs_IEC.rds"))
+write_csv(resSCC_NS, file.path(deseqDir, "SCC_vs_NS.csv"))
+write_csv(resSCC_AK, file.path(deseqDir, "SCC_vs_AK.csv"))
+write_csv(resAK_NS, file.path(deseqDir, "AK_vs_NS.csv"))
+write_csv(resIEC_NS, file.path(deseqDir, "IEC_vs_NS.csv"))
+write_csv(resMixed_NS, file.path(deseqDir, "Mixed_vs_NS.csv"))
+write_csv(resSCC_IEC, file.path(deseqDir, "SCC_vs_IEC.csv"))
+write_csv(resSCC_Mixed, file.path(deseqDir, "SCC_vs_IEC.csv"))
+write_csv(resIEC_Mixed, file.path(deseqDir, "SCC_vs_IEC.csv"))
 
 

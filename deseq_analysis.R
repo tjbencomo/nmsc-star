@@ -3,6 +3,7 @@
 library(DESeq2)
 library(tximport)
 library(IHW)
+library(apeglm)
 library(readr)
 library(dplyr)
 library(stringr)
@@ -58,46 +59,66 @@ rowData(dds)$symbol <- genedf$gene_symbol
 
 # Compute DEGs
 print("Computing contrasts")
-resSCC_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "NS"), parallel = T) %>%
+alphaThresh <- .01
+resSCC_NS <- results(dds, filterFun = ihw, alpha = alphaThresh, contrast = c("condition", "SCC", "NS"), parallel = T) %>%
     data.frame() %>%
     tibble::rownames_to_column('gene_id') %>%
     inner_join(genedf) %>%
     mutate(up_in_scc = log2FoldChange > 0)
-resSCC_AK <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "AK"), parallel = T) %>%
+resSCC_AK <- results(dds, filterFun = ihw, alpha = alphaThresh, contrast = c("condition", "SCC", "AK"), parallel = T) %>%
     data.frame() %>%
     tibble::rownames_to_column('gene_id') %>%
     inner_join(genedf) %>%
     mutate(up_in_scc = log2FoldChange > 0)
-resAK_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "AK", "NS"), parallel = T) %>%
+resAK_NS <- results(dds, filterFun = ihw, alpha = alphaThresh, contrast = c("condition", "AK", "NS"), parallel = T) %>%
     data.frame() %>%
     tibble::rownames_to_column('gene_id') %>%
     inner_join(genedf) %>%
     mutate(up_in_ak = log2FoldChange > 0)
-resIEC_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "IEC", "NS"), parallel = T) %>%
+resIEC_NS <- results(dds, filterFun = ihw, alpha = alphaThresh, contrast = c("condition", "IEC", "NS"), parallel = T) %>%
     data.frame() %>%
     tibble::rownames_to_column('gene_id') %>%
     inner_join(genedf) %>%
     mutate(up_in_iec = log2FoldChange > 0)
-resMixed_NS <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "Mixed", "NS"), parallel = T) %>%
+resMixed_NS <- results(dds, filterFun = ihw, alpha = alphaThresh, contrast = c("condition", "Mixed", "NS"), parallel = T) %>%
     data.frame() %>%
     tibble::rownames_to_column('gene_id') %>%
     inner_join(genedf) %>%
     mutate(up_in_mixed = log2FoldChange > 0)
-resSCC_IEC <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "IEC"), parallel = T) %>%
+resSCC_IEC <- results(dds, filterFun = ihw, alpha = alphaThresh, contrast = c("condition", "SCC", "IEC"), parallel = T) %>%
     data.frame() %>%
     tibble::rownames_to_column('gene_id') %>%
     inner_join(genedf) %>%
     mutate(up_in_scc = log2FoldChange > 0)
-resSCC_Mixed <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "SCC", "Mixed"), parallel = T) %>%
+resSCC_Mixed <- results(dds, filterFun = ihw, alpha = alphaThresh, contrast = c("condition", "SCC", "Mixed"), parallel = T) %>%
     data.frame() %>%
     tibble::rownames_to_column('gene_id') %>%
     inner_join(genedf) %>%
     mutate(up_in_scc = log2FoldChange > 0)
-resIEC_Mixed <- results(dds, filterFun = ihw, alpha = .01, contrast = c("condition", "IEC", "Mixed"), parallel = T) %>%
+resIEC_Mixed <- results(dds, filterFun = ihw, alpha = alphaThresh, contrast = c("condition", "IEC", "Mixed"), parallel = T) %>%
     data.frame() %>%
     tibble::rownames_to_column('gene_id') %>%
     inner_join(genedf) %>%
     mutate(up_in_iec = log2FoldChange > 0)
+
+# MAP estimates
+resMapSCC_NS <- lfcShrink(dds, coef = "condition_SCC_vs_NS", type = "apeglm") %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_scc = log2FoldChange > 0)
+# coef doesn't exist - this is the weird contrast issue with apeglm vs the other methods?
+# resMapSCC_AK <- lfcShrink(dds, coef = "condition_SCC_vs_AK", type = "apeglm") %>%
+#     data.frame() %>%
+#     tibble::rownames_to_column('gene_id') %>%
+#     inner_join(genedf) %>%
+#     mutate(up_in_scc = log2FoldChange > 0)
+resMapAK_NS <- lfcShrink(dds, coef = "condition_AK_vs_NS", type = "apeglm") %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_ak = log2FoldChange > 0)
+
 
 
 # VST normalization
@@ -105,6 +126,7 @@ vsd <- vst(dds, blind = F)
 vsdBlind = vst(dds, blind = T)
 
 # Batch correction
+# See batch_correction.R in nmsc-rna-seq repo
 
 # Save results
 print("Saving results")
@@ -119,5 +141,7 @@ write_csv(resMixed_NS, file.path(deseqDir, "Mixed_vs_NS.csv"))
 write_csv(resSCC_IEC, file.path(deseqDir, "SCC_vs_IEC.csv"))
 write_csv(resSCC_Mixed, file.path(deseqDir, "SCC_vs_IEC.csv"))
 write_csv(resIEC_Mixed, file.path(deseqDir, "SCC_vs_IEC.csv"))
-
+write_csv(resMapSCC_NS, file.path(deseqDir, "MAP_SCC_vs_NS.csv"))
+# write_csv(resMapSCC_AK, file.path(deseqDir, "MAP_SCC_vs_AK.csv"))
+write_csv(resMapAK_NS, file.path(deseqDir, "MAP_AK_vs_NS.csv"))
 

@@ -270,8 +270,8 @@ PRJNA556128,Li-P6-N,NS,SRR9733621,/scratch/users/tbencomo/nmsc-data/SRR9733621_1
 PRJNA556128,Li-P6-T,SCC,SRR9733620,/scratch/users/tbencomo/nmsc-data/SRR9733620_1.fastq,/scratch/users/tbencomo/nmsc-data/SRR9733620_2.fastq,IU,none
 PRJNA556128,Li-P7-N,NS,SRR9733618,/scratch/users/tbencomo/nmsc-data/SRR9733618_1.fastq,/scratch/users/tbencomo/nmsc-data/SRR9733618_2.fastq,IU,none
 PRJNA556128,Li-P7-T,SCC,SRR9733617,/scratch/users/tbencomo/nmsc-data/SRR9733617_1.fastq,/scratch/users/tbencomo/nmsc-data/SRR9733617_2.fastq,IU,none
-PRJNA556128,Li-P8-N,NS,SRR9733616,/scratch/users/tbencomo/nmsc-data/SRR9733616_1.fastq,/scratch/users/tbencomo/nmsc-data/SRR9733616_2.fastq,IU,none
-PRJNA556128,Li-P8-T,SCC,SRR9733619,/scratch/users/tbencomo/nmsc-data/SRR9733619_1.fastq,/scratch/users/tbencomo/nmsc-data/SRR9733619_2.fastq,IU,none
+PRJNA556128,Li-P8-N,NS,SRR9733619,/scratch/users/tbencomo/nmsc-data/SRR9733619_1.fastq,/scratch/users/tbencomo/nmsc-data/SRR9733619_2.fastq,IU,none
+PRJNA556128,Li-P8-T,SCC,SRR9733616,/scratch/users/tbencomo/nmsc-data/SRR9733616_1.fastq,/scratch/users/tbencomo/nmsc-data/SRR9733616_2.fastq,IU,none
 Lee,Lee-100-NS,NS,NA,/oak/stanford/groups/carilee/datasets/scc-rnaseq/ctrl_100_1.fq.gz,/oak/stanford/groups/carilee/datasets/scc-rnaseq/ctrl_100_2.fq.gz,IU,none
 Lee,Lee-100-SCC,SCC,NA,/oak/stanford/groups/carilee/datasets/scc-rnaseq/scc_100_1.fq.gz,/oak/stanford/groups/carilee/datasets/scc-rnaseq/scc_100_2.fq.gz,IU,none
 Lee,Lee-82-NS,NS,NA,/oak/stanford/groups/carilee/datasets/scc-rnaseq/ctrl_82_1.fq.gz,/oak/stanford/groups/carilee/datasets/scc-rnaseq/ctrl_82_2.fq.gz,IU,none

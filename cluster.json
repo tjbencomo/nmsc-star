@@ -2,9 +2,9 @@
     "__default__" :
     {
         "account" : "",
-        "time" : "01:00:00",
+        "time" : "03:00:00",
         "ncpus" : 1,
-        "mem" : "8G",
+        "mem" : "12G",
         "partition" : "normal",
         "out" : "{logpath}/{rule}-{jobid}.out"
     },

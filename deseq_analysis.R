@@ -101,6 +101,13 @@ resIEC_Mixed <- results(dds, filterFun = ihw, alpha = alphaThresh, contrast = c(
     inner_join(genedf) %>%
     mutate(up_in_iec = log2FoldChange > 0)
 
+resIEC_AK <- results(dds, filterFun = ihw, alpha = alphaThresh, contrast = c("condition", "IEC", "AK"), parallel = T) %>%
+    data.frame() %>%
+    tibble::rownames_to_column('gene_id') %>%
+    inner_join(genedf) %>%
+    mutate(up_in_iec = log2FoldChange > 0)
+
+
 # MAP estimates
 resMapSCC_NS <- lfcShrink(dds, coef = "condition_SCC_vs_NS", type = "apeglm") %>%
     data.frame() %>%
@@ -141,6 +148,7 @@ write_csv(resMixed_NS, file.path(deseqDir, "Mixed_vs_NS.csv"))
 write_csv(resSCC_IEC, file.path(deseqDir, "SCC_vs_IEC.csv"))
 write_csv(resSCC_Mixed, file.path(deseqDir, "SCC_vs_IEC.csv"))
 write_csv(resIEC_Mixed, file.path(deseqDir, "SCC_vs_IEC.csv"))
+write_csv(resIEC_AK, file.path(deseqDir, "IEC_AK.csv"))
 write_csv(resMapSCC_NS, file.path(deseqDir, "MAP_SCC_vs_NS.csv"))
 # write_csv(resMapSCC_AK, file.path(deseqDir, "MAP_SCC_vs_AK.csv"))
 write_csv(resMapAK_NS, file.path(deseqDir, "MAP_AK_vs_NS.csv"))

@@ -1,15 +1,15 @@
 #!/bin/bash
 #SBATCH --job-name=star-rsem
-#SBATCH --output=/scratch/users/tbencomo/nmsc-star/log
+#SBATCH --output=/scratch/groups/carilee/nmsc-star/log
 #SBATCH --nodes=1
-#SBATCH --time=01-12:00:00
+#SBATCH --time=02-00:00:00
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=500
+#SBATCH --mem=250
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=tbencomo@stanford.edu
 
 set -e
-cd $(pwd)
+cd $GROUP_SCRATCH/nmsc-star
 echo "Starting snakemake..."
 snakemake --cluster-config cluster.json -j 499 \
     --rerun-incomplete \

@@ -1,9 +1,10 @@
 import os
 import pandas as pd
 
-
-samples = os.listdir('rsem')
-files = [os.path.join('rsem', sample, '.isoforms.results') for sample in samples]
+sample_df = pd.read_csv('metadata_all_studies.csv')
+samples = sample_df['sample_id']
+files = [os.path.join('rsem', f"{sample}-{condition}.isoforms.results") for sample, condition in zip(sample_df.sample_id, sample_df.condition)]
+# files = [os.path.join('rsem', sample, '.isoforms.results') for sample in samples]
 # files = [f for f in files if os.path.isfile(f)]
 
 dfList = []

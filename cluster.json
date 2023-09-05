@@ -12,14 +12,14 @@
     {
         "time" : "19:00:00",
         "ncpus" : "{star_threads}",
-        "mem" : "42G",
+        "mem" : "48G",
         "out" : "{logpath}/{rule}-{wildcards.sample_id}.out"
     },
     "rsem" :
     {
         "time" : "7:00:00",
         "ncpus" : "{rsem_threads}",
-        "mem" : "16G",
+        "mem" : "24G",
         "out" : "{logpath}/{rule}-{wildcards.sample_id}.out"
     },
     "validateFastq" :

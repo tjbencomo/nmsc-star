@@ -15,6 +15,7 @@ star_index = config['star_index']
 star_threads = config['star_threads']
 star_container = config['star_container']
 
+
 # RSEM
 rsem_ref = config['rsem_ref']
 rsem_threads = config['rsem_threads']
@@ -32,6 +33,8 @@ multiqc_container = config['multiqc_container']
 samples['id'] = samples['patient'] + '-' + samples['condition']
 samples = samples.set_index(["id"], drop=False)
 samples = samples.sort_index()
+
+#samples = samples.head(1)
 
 validateFastq_container = config['validateFastq_container']
 
@@ -77,10 +80,11 @@ def getRSEMStranding(wildcards):
 
 rule targets:
     input:
+        expand("star/{sample_id}/Aligned.toTranscriptome.out.bam", sample_id = samples['id']),
         expand("rsem/{sample_id}.genes.results", sample_id = samples['id']),
         expand("qc/qualimap/{sample_id}", sample_id = samples['id']),
-        "qc/multiqc_report.html",
-        "qc/validateFastq_summary.csv"
+        "qc/multiqc_report.html"
+        #"qc/validateFastq_summary.csv"
 
 rule star:
     input:
@@ -104,6 +108,26 @@ rule star:
             --quantMode TranscriptomeSAM \
             --outSAMtype BAM SortedByCoordinate \
             --twopassMode Basic \
+            --outReadsUnmapped None \
+            --outSAMstrandField intronMotif \
+            --outSAMunmapped Within \
+            --chimSegmentMin 12 \
+            --chimJunctionOverhangMin 8 \
+            --chimOutJunctionFormat 1 \
+            --alignSJDBoverhangMin 10 \
+            --alignMatesGapMax 100000 \
+            --alignIntronMax 100000 \
+            --alignSJstitchMismatchNmax 5 -1 5 5 \
+            --outSAMattrRGline ID:{wildcards.sample_id}_lib1 SM:{wildcards.sample_id} \
+            --chimMultimapScoreRange 3 \
+            --chimScoreJunctionNonGTAG -4 \
+            --chimMultimapNmax 20 \
+            --chimNonchimScoreDropMin 10 \
+            --peOverlapNbasesMin 12 \
+            --peOverlapMMp 0.1 \
+            --alignInsertionFlush Right \
+            --alignSplicedMateMapLminOverLmate 0 \
+            --alignSplicedMateMapLmin 30 \
             {params.readcmd}
         """
 
@@ -167,9 +191,9 @@ rule qualimap:
 
 rule multiqc:
     input:
-        star="star",
-        rsem="rsem",
-        qc="qc/qualimap"
+        expand("star/{sample_id}/Aligned.sortedByCoord.out.bam", sample_id = samples['id']),
+        expand("rsem/{sample_id}.genes.results", sample_id = samples['id']),
+        expand("qc/qualimap/{sample_id}", sample_id = samples['id'])
     output:
         "qc/multiqc_report.html",
         directory("qc/multiqc_data")
@@ -178,5 +202,5 @@ rule multiqc:
     singularity: multiqc_container
     shell:
         """
-        multiqc {input} -o {params.outdir}
+        multiqc star/ rsem/ qc/qualimap/ -o {params.outdir}
         """

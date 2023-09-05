@@ -1,5 +1,5 @@
 # CSV file with sample metadata
-samples: samples.csv
+samples: metadata_all_studies_with_paths.csv
 # samples: test.csv
 
 # SLURM Log File
@@ -10,7 +10,7 @@ slurm_log_dir: slurm-logs
 
 # Path to the STAR index
 star_index: /home/groups/carilee/refs/rnaseq-refs/hg38/star_index
-star_threads: 6
+star_threads: 5
 # Path or URL to the STAR singularity container. This pulls from Bioconda's singularity depo
 star_container: https://depot.galaxyproject.org/singularity/star%3A2.7.9a--h9ee0642_0
 

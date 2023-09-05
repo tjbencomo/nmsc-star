@@ -30,6 +30,7 @@ metadata <- metadata %>%
     mutate(study = factor(study_accession)) %>%
     as.data.frame()
 
+stop('NEED TO CHANGE CONDITION ORDERING')
 # Load RSEM quant files
 print("Loading RSEM files")
 files <- file.path(rsemDir, paste0(metadata$Sample, ".isoforms.results"))

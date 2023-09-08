@@ -94,6 +94,7 @@ for (i in 1:length(contrast_list)) {
     mle_res <- results(dds, filterFun = ihw, alpha = alphaThresh, 
                        contrast = c("condition", numerator_name, denominator_name),
                        parallel = T)
+    mle_res$gene_symbol <- rowData(dds)$symbol
     print("Calculated results")
     mle_res_df <- mle_res %>% as.data.frame() %>% tibble::rownames_to_column('gene_id') %>%
                mutate(!!direction_col_name := log2FoldChange > 0) 

@@ -34,7 +34,7 @@ samples['id'] = samples['patient'] + '-' + samples['condition']
 samples = samples.set_index(["id"], drop=False)
 samples = samples.sort_index()
 
-#samples = samples.head(1)
+#samples = samples.head(100)
 
 validateFastq_container = config['validateFastq_container']
 
@@ -98,10 +98,11 @@ rule star:
     singularity: star_container
     params: 
         readcmd = lambda wildcards, input: '--readFilesCommand zcat' if isGzZipped(input.fq1) else '',
-        outdir = "star/{sample_id}/"
+        outdir = "star/{sample_id}/",
+        ncores = star_threads * 2
     shell:
         """
-        STAR --runThreadN {threads} \
+        STAR --runThreadN {params.ncores} \
             --genomeDir {input.genomedir} \
             --readFilesIn {input.fq1} {input.fq2} \
             --outFileNamePrefix {params.outdir} \

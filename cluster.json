@@ -10,14 +10,14 @@
     },
     "star" :
     {
-        "time" : "19:00:00",
+        "time" : "20:00:00",
         "ncpus" : "{star_threads}",
-        "mem" : "48G",
+        "mem" : "56G",
         "out" : "{logpath}/{rule}-{wildcards.sample_id}.out"
     },
     "rsem" :
     {
-        "time" : "7:00:00",
+        "time" : "16:00:00",
         "ncpus" : "{rsem_threads}",
         "mem" : "24G",
         "out" : "{logpath}/{rule}-{wildcards.sample_id}.out"

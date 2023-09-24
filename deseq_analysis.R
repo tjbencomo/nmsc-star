@@ -27,38 +27,37 @@ metadata <- read_csv(metadataFp)
 tx2g <- read_csv(tx2gFp)
 condition_order <- c("NS", "AK", "AK_IEC", "AK_IEC_SCC", "IEC", "KA", "SCC")
 
-# metadata <- metadata %>% filter(condition %in% c("NS", "SCC")) %>% group_by(condition) %>% head(20)
-
-metadata <- metadata %>%
-    filter(condition != "BCC") %>%
-    mutate(condition = factor(condition, levels = condition_order)) %>%
-    mutate(study = factor(study_name)) %>%
-    as.data.frame()
+# metadata <- metadata %>%
+#     filter(condition != "BCC") %>%
+#     mutate(condition = factor(condition, levels = condition_order)) %>%
+#     mutate(study = factor(study_name)) %>%
+#     as.data.frame()
 
 
-print(table(metadata$condition))
-print(table(metadata$study))
+# print(table(metadata$condition))
+# print(table(metadata$study))
+# print(dim(metadata))
 
-# Load RSEM quant files
-print("Loading RSEM files")
-files <- file.path(rsemDir, paste0(metadata$Sample, ".isoforms.results"))
-names(files) <- metadata$Sample
-txi.rsem <- tximport(files, type = "rsem", txIn = TRUE, txOut = FALSE, tx2gene = tx2g %>% select(-gene_symbol))
+# # Load RSEM quant files
+# print("Loading RSEM files")
+# files <- file.path(rsemDir, paste0(metadata$Sample, ".isoforms.results"))
+# names(files) <- metadata$Sample
+# txi.rsem <- tximport(files, type = "rsem", txIn = TRUE, txOut = FALSE, tx2gene = tx2g %>% select(-gene_symbol))
 
 
-# Check that samples are properly matched with read data
-stopifnot(all(colnames(txi.rsem$counts) == metadata$Sample))
-rownames(metadata) <- metadata$Sample
+# # Check that samples are properly matched with read data
+# stopifnot(all(colnames(txi.rsem$counts) == metadata$Sample))
+# rownames(metadata) <- metadata$Sample
 
-print("Creating DESeq2 object")
-dds <- DESeqDataSetFromTximport(txi.rsem , metadata, ~ study + condition)
-# dds <- DESeqDataSetFromTximport(txi.rsem , metadata, ~ condition)
-print("Running DESeq2")
-dds <- DESeq(dds, parallel = T)
+# print("Creating DESeq2 object")
+# dds <- DESeqDataSetFromTximport(txi.rsem , metadata, ~ study + condition)
+# # dds <- DESeqDataSetFromTximport(txi.rsem , metadata, ~ condition)
+# print("Running DESeq2")
+# dds <- DESeq(dds, parallel = T)
 
-print(dds)
-saveRDS(dds, "deseq/tmp.deseq.rds")
-# dds <- readRDS("deseq/tmp.deseq.rds")
+# print(dds)
+# saveRDS(dds, "deseq/tmp.deseq.rds")
+dds <- readRDS("deseq/tmp.deseq.rds")
 
 # Add gene symbol info to dds object
 genedf <- tx2g %>% select(-transcript_id) %>% distinct(gene_id, .keep_all = T)
@@ -83,6 +82,7 @@ contrast_list <- list(
 )
 
 alphaThresh <- .05
+lfcThresh <- .5
 print("Computing contrasts")
 for (i in 1:length(contrast_list)) {
     contrast_name <- names(contrast_list)[i]
@@ -91,18 +91,53 @@ for (i in 1:length(contrast_list)) {
     denominator_name <- contrast_list[[i]][1]
     direction_col_name <- paste0('up_in_', numerator_name)
     print(direction_col_name)
-    mle_res <- results(dds, filterFun = ihw, alpha = alphaThresh, 
+    ## Get and save thresholded test results
+    print("Calculating lfcThreshold=.5 DEGs")
+    mle_res_thresh <- results(dds, filterFun = ihw, alpha = alphaThresh, 
                        contrast = c("condition", numerator_name, denominator_name),
-                       parallel = T)
-    mle_res$gene_symbol <- rowData(dds)$symbol
-    print("Calculated results")
-    mle_res_df <- mle_res %>% as.data.frame() %>% tibble::rownames_to_column('gene_id') %>%
+                       parallel = T, lfcThreshold = lfcThresh)
+    mle_res_thresh$gene_symbol <- rowData(dds)$symbol
+    mle_res_thresh_df <- mle_res_thresh %>% as.data.frame() %>% tibble::rownames_to_column('gene_id') %>%
                mutate(!!direction_col_name := log2FoldChange > 0) 
-    fn <- paste0(numerator_name, '_vs_', denominator_name, '.csv') 
+    fn <- paste0(numerator_name, '_vs_', denominator_name, "_lfcThreshold", '.csv') 
     fp <- file.path(deseqDir, fn)
     print(fp)
-    write_csv(mle_res_df, fp)
+    write_csv(mle_res_thresh_df, fp)
+   
+    ## Get and save non-thresholded results
+    print("Calculating non-thresholded DEGs")
+    mle_res <-results(dds, filterFun = ihw, alpha = alphaThresh, 
+                      contrast = c("condition", numerator_name, denominator_name),
+                      parallel = T )
+    mle_res$gene_symbol <- rowData(dds)$symbol 
+    mle_res_df <- mle_res %>% as.data.frame() %>% tibble::rownames_to_column('gene_id') %>%
+               mutate(!!direction_col_name := log2FoldChange > 0)
+    fn2 <- paste0(numerator_name, '_vs_', denominator_name, '.csv') 
+    fp2 <- file.path(deseqDir, fn2)
+    print(fp2)
+    write_csv(mle_res_df, fp2)
+
+    ## Get and save MAP results if available
+    coef_name <- paste0("condition_", numerator_name, "_vs_", denominator_name)
+    if (coef_name %in% resultsNames(dds)) {
+        print("Calculating MAP DEGs")
+        map_res <- lfcShrink(dds, coef=coef_name, 
+                             type="apeglm", parallel = T)
+        map_res$gene_symbol <- rowData(dds)$symbol
+        map_res_df <- map_res %>% as.data.frame() %>% tibble::rownames_to_column('gene_id') %>%
+                   mutate(!!direction_col_name := log2FoldChange > 0)
+        fn3 <- paste0(numerator_name, '_vs_', denominator_name, "_MAP", '.csv') 
+        fp3 <- file.path(deseqDir, fn3)
+        print(fp3)
+        write_csv(map_res_df, fp3)
+    } else {
+        print(paste("Coefficient", coef_name, "not found in resultsNames(dds)"))
+        print("Skipping MAP estimation")
+    }
 }
+
+contrast_list_map <- contrast_list[c("NS_vs_AK", "AK_vs_SCC", "NS_vs_SCC")]
+print("Calculating MAP estimates")
 
 # VST normalization without batch correction
 vsd <- vst(dds, blind = F)

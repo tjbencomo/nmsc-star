@@ -13,6 +13,8 @@ register(MulticoreParam(8))
 
 # Setup
 rsemDir <- "rsem"
+# This dir will be named scc-meta-analysis if you are running scripts
+# after reading the paper
 dataDir <- file.path("~", "nmsc-rna-seq", "data")
 metadataFp <- file.path(dataDir, "metadata_final_cohort.csv")
 tx2gFp <- file.path(dataDir, "gencode.v38.tx2gene.csv.gz")

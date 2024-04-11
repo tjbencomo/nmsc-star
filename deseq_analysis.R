@@ -23,43 +23,47 @@ if (!dir.exists(deseqDir)) {
     dir.create(deseqDir)
 }
 
-# Load metadata
-print("Loading metadata")
-metadata <- read_csv(metadataFp)
-tx2g <- read_csv(tx2gFp)
-condition_order <- c("NS", "AK", "AK_IEC", "AK_IEC_SCC", "IEC", "KA", "SCC")
-
-# metadata <- metadata %>%
-#     filter(condition != "BCC") %>%
-#     mutate(condition = factor(condition, levels = condition_order)) %>%
-#     mutate(study = factor(study_name)) %>%
-#     as.data.frame()
-
-
-# print(table(metadata$condition))
-# print(table(metadata$study))
-# print(dim(metadata))
-
-# # Load RSEM quant files
-# print("Loading RSEM files")
-# files <- file.path(rsemDir, paste0(metadata$Sample, ".isoforms.results"))
-# names(files) <- metadata$Sample
-# txi.rsem <- tximport(files, type = "rsem", txIn = TRUE, txOut = FALSE, tx2gene = tx2g %>% select(-gene_symbol))
-
-
-# # Check that samples are properly matched with read data
-# stopifnot(all(colnames(txi.rsem$counts) == metadata$Sample))
-# rownames(metadata) <- metadata$Sample
-
-# print("Creating DESeq2 object")
-# dds <- DESeqDataSetFromTximport(txi.rsem , metadata, ~ study + condition)
-# # dds <- DESeqDataSetFromTximport(txi.rsem , metadata, ~ condition)
-# print("Running DESeq2")
-# dds <- DESeq(dds, parallel = T)
-
-# print(dds)
-# saveRDS(dds, "deseq/tmp.deseq.rds")
-dds <- readRDS("deseq/tmp.deseq.rds")
+# Load if DESeq() has already been run, otherwise build from scratch
+if (file.exists(file.path(deseqDir, "tmp.deseq.rds"))) {
+    dds <- readRDS(file.path(deseqDir, "tmp.deseq.rds"))
+} else {
+    # Load metadata
+    print("Loading metadata")
+    metadata <- read_csv(metadataFp)
+    tx2g <- read_csv(tx2gFp)
+    condition_order <- c("NS", "AK", "AK_IEC", "AK_IEC_SCC", "IEC", "KA", "SCC")
+    
+    metadata <- metadata %>%
+        filter(condition != "BCC") %>%
+        mutate(condition = factor(condition, levels = condition_order)) %>%
+        mutate(study = factor(study_name)) %>%
+        as.data.frame()
+    
+    
+    print(table(metadata$condition))
+    print(table(metadata$study))
+    print(dim(metadata))
+    
+    # Load RSEM quant files
+    print("Loading RSEM files")
+    files <- file.path(rsemDir, paste0(metadata$Sample, ".isoforms.results"))
+    names(files) <- metadata$Sample
+    txi.rsem <- tximport(files, type = "rsem", txIn = TRUE, txOut = FALSE, tx2gene = tx2g %>% select(-gene_symbol))
+    
+    
+    # Check that samples are properly matched with read data
+    stopifnot(all(colnames(txi.rsem$counts) == metadata$Sample))
+    rownames(metadata) <- metadata$Sample
+    
+    print("Creating DESeq2 object")
+    dds <- DESeqDataSetFromTximport(txi.rsem , metadata, ~ study + condition)
+    # dds <- DESeqDataSetFromTximport(txi.rsem , metadata, ~ condition)
+    print("Running DESeq2")
+    dds <- DESeq(dds, parallel = T)
+    
+    print(dds)
+    saveRDS(dds, file.path(deseqDir, "tmp.deseq.rds"))
+} 
 
 # Add gene symbol info to dds object
 genedf <- tx2g %>% select(-transcript_id) %>% distinct(gene_id, .keep_all = T)

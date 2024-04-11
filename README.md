@@ -2,6 +2,8 @@
 STAR-RSEM Snakemake pipeline for cSCC meta-analysis project. Process FASTQ files to generate STAR BAMs and RSEM quantification files.
 Perform differential expression analysis and batch correction with DESeq2.
 
+Preprocessing pipeline for [Meta Analysis of cutaneous SCC RNA-Seq](https://github.com/tjbencomo/scc-meta-analysis)
+
 ## How to run and key output files
 First run the Snakemake workflow to align reads to the reference genome and quantify gene counts (see below). 
 After the pipeline is completed, run `deseq_analys.R` to perform differential expression tests using DESeq2.
